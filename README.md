@@ -17,6 +17,8 @@ Luego abre `http://localhost:3000`.
 - `/editor?mode=merge`
 - `/editor?mode=split`
 - `/editor?mode=edit`
+- `/image-to-pdf`
+- `/extract-images`
 
 ## Implementado
 
@@ -27,5 +29,8 @@ Luego abre `http://localhost:3000`.
 - Eliminacion de paginas antes de exportar.
 - Merge y split con `pdf-lib`.
 - Insercion de imagenes con capas sobre `react-pdf` y `react-rnd`.
+- Conversion ordenable de hasta 100 imagenes PNG/JPG o 100MB a PDF.
+- Paginas A4 o Carta configurables, o ajustadas al tamano de cada imagen.
+- Extraccion de imagenes incrustadas a PNG y descarga ZIP.
 - Conversion de coordenadas HTML a puntos PDF.
 - Limpieza de `ObjectURL` en previews y descargas.

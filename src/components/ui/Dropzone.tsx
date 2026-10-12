@@ -5,16 +5,21 @@ import { Upload } from 'lucide-react';
 
 const pdfMime = 'application/pdf';
 const imageMimes = ['image/png', 'image/jpeg'];
-const maxFiles = 5;
-const maxBytes = 100 * 1024 * 1024;
+const defaultPdfMaxFiles = 5;
+const defaultPdfMaxBytes = 100 * 1024 * 1024;
 
 type AcceptMode = 'pdf' | 'image';
+type LimitPolicy = 'warn' | 'reject';
 
 interface DropzoneProps {
   mode: AcceptMode;
   currentFileCount?: number;
   currentBytes?: number;
   multiple?: boolean;
+  disabled?: boolean;
+  maxFiles?: number;
+  maxBytes?: number;
+  limitPolicy?: LimitPolicy;
   label: string;
   help?: ReactNode;
   onFiles: (files: File[]) => void;
@@ -26,6 +31,10 @@ export function Dropzone({
   currentFileCount = 0,
   currentBytes = 0,
   multiple = true,
+  disabled = false,
+  maxFiles,
+  maxBytes,
+  limitPolicy = 'warn',
   label,
   help,
   onFiles,
@@ -34,6 +43,8 @@ export function Dropzone({
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const accept = mode === 'pdf' ? pdfMime : imageMimes.join(',');
+  const effectiveMaxFiles = maxFiles ?? (mode === 'pdf' ? defaultPdfMaxFiles : undefined);
+  const effectiveMaxBytes = maxBytes ?? (mode === 'pdf' ? defaultPdfMaxBytes : undefined);
 
   function validate(files: File[]) {
     const allowed = mode === 'pdf' ? [pdfMime] : imageMimes;
@@ -43,12 +54,18 @@ export function Dropzone({
       return [];
     }
 
-    if (mode === 'pdf') {
-      const nextCount = currentFileCount + files.length;
-      const nextBytes = currentBytes + files.reduce((sum, file) => sum + file.size, 0);
-      if (nextCount > maxFiles || nextBytes > maxBytes) {
-        onError?.('Limite recomendado superado: maximo 5 archivos o 100MB acumulados.');
-      }
+    const nextCount = currentFileCount + files.length;
+    const nextBytes = currentBytes + files.reduce((sum, file) => sum + file.size, 0);
+    const filesExceeded = effectiveMaxFiles !== undefined && nextCount > effectiveMaxFiles;
+    const bytesExceeded = effectiveMaxBytes !== undefined && nextBytes > effectiveMaxBytes;
+
+    if (filesExceeded || bytesExceeded) {
+      const limits = [
+        effectiveMaxFiles !== undefined ? `${effectiveMaxFiles} archivos` : null,
+        effectiveMaxBytes !== undefined ? `${Math.round(effectiveMaxBytes / 1024 / 1024)}MB acumulados` : null,
+      ].filter(Boolean);
+      onError?.(`${limitPolicy === 'reject' ? 'Limite superado' : 'Limite recomendado superado'}: maximo ${limits.join(' o ')}.`);
+      if (limitPolicy === 'reject') return [];
     }
 
     return multiple ? files : files.slice(0, 1);
@@ -62,6 +79,7 @@ export function Dropzone({
   function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setDragging(false);
+    if (disabled) return;
     handleFiles(event.dataTransfer.files);
   }
 
@@ -74,21 +92,28 @@ export function Dropzone({
     <div
       role="button"
       tabIndex={0}
-      onClick={() => inputRef.current?.click()}
+      aria-disabled={disabled}
+      onClick={() => {
+        if (!disabled) inputRef.current?.click();
+      }}
       onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') inputRef.current?.click();
+        if (!disabled && (event.key === 'Enter' || event.key === ' ')) inputRef.current?.click();
       }}
       onDragOver={(event) => {
         event.preventDefault();
-        setDragging(true);
+        if (!disabled) setDragging(true);
       }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       className={`rounded-lg border border-dashed p-4 text-left transition ${
-        dragging ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white hover:bg-gray-50'
+        disabled
+          ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
+          : dragging
+          ? 'border-red-400 bg-red-50'
+          : 'border-gray-300 bg-white hover:bg-gray-50'
       }`}
     >
-      <input ref={inputRef} type="file" accept={accept} multiple={multiple} hidden onChange={handleInput} />
+      <input ref={inputRef} type="file" accept={accept} multiple={multiple} disabled={disabled} hidden onChange={handleInput} />
       <div className="flex items-start gap-3">
         <span className="grid h-9 w-9 shrink-0 place-items-center rounded bg-gray-100 text-gray-700">
           <Upload size={18} />

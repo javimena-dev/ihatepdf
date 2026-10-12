@@ -1,12 +1,19 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { LandingHeader } from '@/components/layout/LandingHeader';
 import { Download, FileText, Merge, Scissors } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { usePdfProcessor } from '@/hooks/usePdfProcessor';
 import { usePdfStore } from '@/store/usePdfStore';
 
 export function Navbar() {
+  const pathname = usePathname();
+  return pathname === '/' ? <LandingHeader /> : <EditorNavbar />;
+}
+
+function EditorNavbar() {
   const mode = usePdfStore((state) => state.mode);
   const files = usePdfStore((state) => state.files);
   const activeFileId = usePdfStore((state) => state.activeFileId);
