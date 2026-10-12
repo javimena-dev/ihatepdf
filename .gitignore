@@ -1,9 +1,34 @@
-node_modules
-.next
-out
-dist
-*.tsbuildinfo
-.env*.local
-npm-debug.log*
+# Dependencies
+/node_modules/
 
-.vercel
+# Next.js and build output
+/.next/
+/out/
+/dist/
+/.turbo/
+/coverage/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs and caches
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
+
+# Local tooling
+/.vercel/
+/.npmrc
+/C:/
+/tmp/
+/output/
+
+# Editors and operating system
+.DS_Store
+.idea/
+.vscode/
